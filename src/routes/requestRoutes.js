@@ -15,4 +15,4 @@ router.get('/', auth, getAllRequests);
 // Empresa actualiza estado (aceptar/rechazar/completar)
 router.put('/:id', auth, updateStatus);
 
-module.exports = router;
+export default router;
