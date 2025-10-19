@@ -46,5 +46,32 @@ export const login = async (req, res) => {
 
     res.json({
       token,
-      user: { id: user._id, name: user.name, email:
+      user: { id: user._id, name: user.name, email: user.email, role: user.role },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error en el servidor" });
+  }
+};
+
+// @desc   Perfil del usuario autenticado
+// @route  GET /api/users/profile
+export const getProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+    if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
+
+    res.json({
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error en el servidor" });
+  }
+};
 
