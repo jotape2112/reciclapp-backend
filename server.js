@@ -6,11 +6,12 @@ import requestRoutes from "./src/routes/requestRoutes.js";
 import cors from "cors";
 
 dotenv.config();
-connectDB();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+connectDB();
 
 // Rutas
 app.use("/api/users", userRoutes);
