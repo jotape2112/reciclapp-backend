@@ -5,7 +5,7 @@ import auth from "../middlewares/auth.js";
 const router = express.Router();
 
 // Usuario crea solicitud
-router.post('/', auth, createRequest);
+//router.post('/', auth, createRequest);
 
 // Usuario ve su historial
 router.get('/my', auth, getUserRequests);
