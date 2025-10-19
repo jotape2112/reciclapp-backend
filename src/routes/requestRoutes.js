@@ -1,7 +1,8 @@
-const express = require('express');
+import express from "express";
+import { createRequest, getUserRequests, updateStatus, getAllRequests } from "../controllers/requestController.js";
+import auth from "../middlewares/auth.js";
+
 const router = express.Router();
-const { createRequest, getUserRequests, updateStatus, getAllRequests } = require('../controllers/requestController');
-const auth = require('../middlewares/auth');
 
 // Usuario crea solicitud
 router.post('/', auth, createRequest);
