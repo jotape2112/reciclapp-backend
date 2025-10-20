@@ -8,39 +8,36 @@ import cors from "cors";
 dotenv.config();
 const app = express();
 
+// ✅ Lista de dominios permitidos
+const allowedOrigins = [
+  "http://localhost:5173", // desarrollo local
+  "https://reciclap.netlify.app", // producción en Netlify
+];
+
 // ✅ Configuración de CORS
-app.use(cors({
-  origin: ["https://reciclap.netlify.app"], // tu dominio de Netlify
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  credentials: true
-}));
-
-app.use(express.json());
-
-
 app.use(
   cors({
-    origin: function (origin, callback) {
-      // Permite requests sin origin (como desde Postman o Thunder)
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.indexOf(origin) === -1) {
-        const msg = `La política CORS bloqueó el acceso desde el dominio: ${origin}`;
-        return callback(new Error(msg), false);
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("CORS no permitido por seguridad"));
       }
-      return callback(null, true);
     },
-    credentials: true, // Permite cookies o headers personalizados (opcional)
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
   })
 );
 
 app.use(express.json());
 
-// Rutas
+// ✅ Rutas
 app.use("/api/users", userRoutes);
 app.use("/api/requests", requestRoutes);
 
-// Conexión y arranque
+// ✅ Conexión a MongoDB
 connectDB();
 
+// ✅ Iniciar servidor
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Servidor corriendo en puerto ${PORT}`));
