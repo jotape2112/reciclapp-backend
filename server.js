@@ -8,21 +8,27 @@ import cors from "cors";
 dotenv.config();
 const app = express();
 
-// ✅ Lista de dominios permitidos
+// 🌍 Lista de orígenes permitidos
 const allowedOrigins = [
-  "http://localhost:5173", // desarrollo local
-  "https://reciclap.netlify.app", // producción en Netlify
+  "https://reciclap.netlify.app",
+  "http://localhost:5173", // para pruebas locales
 ];
 
-// ✅ Configuración de CORS
+// 🧩 Configuración global de CORS
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("CORS no permitido por seguridad"));
+    origin: function (origin, callback) {
+      // Permite requests sin origin (como desde Postman o Thunder)
+      if (!origin) return callback(null, true);
+
+      if (!allowedOrigins.includes(origin)) {
+        return callback(
+          new Error(`CORS bloqueó el acceso desde el dominio: ${origin}`),
+          false
+        );
       }
+
+      return callback(null, true);
     },
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
@@ -31,13 +37,12 @@ app.use(
 
 app.use(express.json());
 
-// ✅ Rutas
+// Rutas
 app.use("/api/users", userRoutes);
 app.use("/api/requests", requestRoutes);
 
-// ✅ Conexión a MongoDB
+// Conexión y arranque
 connectDB();
 
-// ✅ Iniciar servidor
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Servidor corriendo en puerto ${PORT}`));
