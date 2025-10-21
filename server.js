@@ -38,7 +38,7 @@ app.use(
 app.use(express.json());
 
 // Rutas
-app.use("/api/users", userRoutes);
+app.use("/api/users", userroutes);
 app.use("/api/requests", requestRoutes);
 
 // Conexión y arranque
