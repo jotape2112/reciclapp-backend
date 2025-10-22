@@ -1,6 +1,6 @@
 import Request from "../models/Request.js";
 
-// ✅ Crear solicitud
+// ✅ Crear solicitud (solo usuario)
 export const createRequest = async (req, res) => {
   try {
     if (req.user.role !== "usuario") {
@@ -8,10 +8,11 @@ export const createRequest = async (req, res) => {
     }
 
     const nuevaSolicitud = await Request.create({
-      user: req.user.id,
-      tipo: req.body.tipo,
-      descripcion: req.body.descripcion,
-      estado: "pendiente",
+      userId: req.user.id,
+      items: req.body.items || [],
+      address: req.body.address,
+      schedule: req.body.schedule,
+      status: "pendiente",
     });
 
     res.status(201).json(nuevaSolicitud);
@@ -32,10 +33,17 @@ export const getUserRequests = async (req, res) => {
   }
 };
 
-// ✅ Ver todas las solicitudes (solo empresa/admin)
+// ✅ Ver todas las solicitudes (para empresas/admin)
 export const getAllRequests = async (req, res) => {
   try {
-    const requests = await Request.find().populate("userId", "name email").sort({ createdAt: -1 });
+    if (req.user.role !== "empresa" && req.user.role !== "admin") {
+      return res.status(403).json({ message: "Acceso denegado." });
+    }
+
+    const requests = await Request.find()
+      .populate("userId", "name email")
+      .sort({ createdAt: -1 });
+
     res.json(requests);
   } catch (err) {
     console.error(err);
@@ -61,5 +69,23 @@ export const updateStatus = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Error al actualizar el estado" });
+  }
+};
+
+// ✅ Ver historial de solicitudes completadas (solo para empresas)
+export const getCompletedRequests = async (req, res) => {
+  try {
+    if (req.user.role !== "empresa" && req.user.role !== "admin") {
+      return res.status(403).json({ message: "Solo las empresas pueden ver el historial." });
+    }
+
+    const completed = await Request.find({ status: "completada" })
+      .populate("userId", "name email")
+      .sort({ updatedAt: -1 });
+
+    res.json(completed);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error al obtener el historial de solicitudes completadas." });
   }
 };
