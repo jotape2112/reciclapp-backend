@@ -4,14 +4,17 @@ import {
   getUserRequests,
   getAllRequests,
   updateStatus,
+  getCompletedRequests,
 } from "../controllers/requestController.js";
-import auth from "../middlewares/auth.js";
+import { protect } from "../middlewares/auth.js";
 
 const router = express.Router();
 
-router.post("/", auth, createRequest);
-router.get("/my", auth, getUserRequests);
-router.get("/", auth, getAllRequests);
-router.put("/:id", auth, updateStatus);
+// 🔐 Solo usuarios autenticados pueden acceder a estas rutas
+router.post("/", protect, createRequest);
+router.get("/user", protect, getUserRequests);
+router.get("/", protect, getAllRequests);
+router.put("/:id/status", protect, updateStatus);
+router.get("/completed", protect, getCompletedRequests); // ✅ nueva ruta
 
 export default router;
