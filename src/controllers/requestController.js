@@ -3,20 +3,21 @@ import Request from "../models/Request.js";
 // ✅ Crear solicitud
 export const createRequest = async (req, res) => {
   try {
-    const { items, address, schedule } = req.body;
+    if (req.user.role !== "usuario") {
+      return res.status(403).json({ message: "Solo los usuarios pueden crear solicitudes." });
+    }
 
-    const newRequest = new Request({
-      userId: req.user.id,
-      items,
-      address,
-      schedule,
+    const nuevaSolicitud = await Request.create({
+      user: req.user.id,
+      tipo: req.body.tipo,
+      descripcion: req.body.descripcion,
+      estado: "pendiente",
     });
 
-    await newRequest.save();
-    res.status(201).json(newRequest);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Error al crear la solicitud" });
+    res.status(201).json(nuevaSolicitud);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error al crear la solicitud." });
   }
 };
 
