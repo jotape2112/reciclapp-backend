@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import connectDB from "./src/config/db.js";
 import userRoutes from "./src/routes/userroutes.js";
 import requestRoutes from "./src/routes/requestRoutes.js";
-import pointRoutes from "./routes/pointRoutes.js";
+import pointRoutes from "./src/routes/pointRoutes.js";
 import cors from "cors";
 
 
