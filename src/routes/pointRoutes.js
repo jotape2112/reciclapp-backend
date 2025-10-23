@@ -1,10 +1,13 @@
 import express from "express";
-import { getPoints, createPoint } from "../src/controllers/pointController.js";
-import { protect } from "../src/middleware/authMiddleware.js";
+import { getPoints, createPoint } from "../controllers/pointController.js";
+import { protect } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-router.get("/", getPoints); // público
-router.post("/", protect, createPoint); // solo empresas
+// 🔹 Público: ver puntos de reciclaje
+router.get("/", getPoints);
+
+// 🔹 Solo empresas: crear nuevos puntos
+router.post("/", protect, createPoint);
 
 export default router;
