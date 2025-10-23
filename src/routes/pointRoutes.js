@@ -1,6 +1,6 @@
 import express from "express";
-import { getPoints, createPoint } from "../controllers/pointController.js";
-import { protect } from "../middleware/authMiddleware.js";
+import { getPoints, createPoint } from "../src/controllers/pointController.js";
+import { protect } from "../src/middleware/authMiddleware.js";
 
 const router = express.Router();
 
