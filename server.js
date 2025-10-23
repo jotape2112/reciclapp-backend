@@ -3,7 +3,9 @@ import dotenv from "dotenv";
 import connectDB from "./src/config/db.js";
 import userRoutes from "./src/routes/userroutes.js";
 import requestRoutes from "./src/routes/requestRoutes.js";
+import pointRoutes from "./routes/pointRoutes.js";
 import cors from "cors";
+
 
 dotenv.config();
 const app = express();
@@ -40,6 +42,7 @@ app.use(express.json());
 // Rutas
 app.use("/api/users", userRoutes);
 app.use("/api/requests", requestRoutes);
+app.use("/api/points", pointRoutes);
 
 // Conexión y arranque
 connectDB();
