@@ -6,7 +6,7 @@ import {
   updateStatus,
   getCompletedRequests,
 } from "../controllers/requestController.js";
-import { protect } from "../middlewares/auth.js";
+import { protect } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
