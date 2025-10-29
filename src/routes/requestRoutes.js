@@ -1,25 +1,21 @@
 import express from "express";
-
 import {
   createRequest,
   getUserRequests,
   getAllRequests,
   updateStatus,
   getCompletedRequests,
+  getStats,
 } from "../controllers/requestController.js";
-import { protect } from "../middlewares/authMiddleware.js";
+import { protect } from "../middlewares/auth.js";
 
 const router = express.Router();
 
-// 🔐 Solo usuarios autenticados pueden acceder a estas rutas
 router.post("/", protect, createRequest);
 router.get("/user", protect, getUserRequests);
 router.get("/", protect, getAllRequests);
-router.put("/:id/status", protect, updateStatus);
-router.get("/completed", protect, getCompletedRequests); // ✅ nueva ruta
+router.put("/:id", protect, updateStatus);
+router.get("/completed", protect, getCompletedRequests);
+router.get("/stats", protect, getStats);
 
 export default router;
-
-import { getStats } from "../controllers/requestController.js";
-
-router.get("/stats", protect, getStats);
