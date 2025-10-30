@@ -1,29 +1,41 @@
 import Point from "../models/Point.js";
 
+// Obtener puntos
 export const getPoints = async (req, res) => {
   try {
-    const points = await Point.find().populate("companyId", "name email");
+    const points = await Point.find();
     res.json(points);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Error al obtener los puntos de reciclaje" });
+    res.status(500).json({ message: "Error al obtener los puntos" });
   }
 };
 
+// Crear un nuevo punto (empresa)
 export const createPoint = async (req, res) => {
   try {
-    if (req.user.role !== "empresa") {
-      return res.status(403).json({ message: "Solo las empresas pueden registrar puntos." });
+    const { name, address, latitude, longitude, materials } = req.body;
+
+    if (!name || !address || !latitude || !longitude || !materials) {
+      return res.status(400).json({ message: "Faltan datos obligatorios." });
     }
 
-    const newPoint = await Point.create({
-      name: req.body.name,
-      address: req.body.address,
-      materials: req.body.materials,
-      companyId: req.user._id,
+    const point = new Point({
+      name,
+      address,
+      latitude,
+      longitude,
+      materials,
+      companyId: req.user?.id || null,
     });
 
-    res.status(201).json(newPoint);
+    await point.save();
+    res.status(201).json(point);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error al crear el punto de reciclaje." });
+  }
+};
+us(201).json(newPoint);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Error al crear el punto de reciclaje" });
