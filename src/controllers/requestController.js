@@ -106,23 +106,33 @@ export const getStats = async (req, res) => {
     const monthlyCount = {};
 
     completedRequests.forEach((r) => {
+      // Contar materiales
       r.items?.forEach((item) => {
         materialCount[item.material] = (materialCount[item.material] || 0) + item.quantity;
       });
 
+      // Contar por mes
       const month = new Date(r.createdAt).toLocaleString("es-CL", { month: "short" });
       monthlyCount[month] = (monthlyCount[month] || 0) + 1;
 
+      // Contar por comuna
       if (r.address) {
         const comuna = r.address.split(",")[0]?.trim() || "Desconocida";
         communeCount[comuna] = (communeCount[comuna] || 0) + 1;
       }
     });
 
+    // ✅ Ordenar los meses correctamente
+    const monthsOrder = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+    const monthly = Object.entries(monthlyCount)
+      .map(([month, total]) => ({ month, total }))
+      .sort((a, b) => monthsOrder.indexOf(a.month) - monthsOrder.indexOf(b.month));
+
+    // ✅ Preparar datos finales
     const data = {
       materials: Object.entries(materialCount).map(([name, value]) => ({ name, value })),
       communes: Object.entries(communeCount).map(([name, value]) => ({ name, value })),
-      monthly: Object.entries(monthlyCount).map(([month, total]) => ({ month, total })),
+      monthly,
     };
 
     res.json(data);
