@@ -1,5 +1,5 @@
 // src/controllers/puntosMMA.controller.js
-const axios = require("axios");
+import axios from "axios";
 
 const MATERIALS_TRANSLATION = {
   glass: "Vidrio",
@@ -12,7 +12,7 @@ const MATERIALS_TRANSLATION = {
   phone: "Celulares",
 };
 
-const getPuntosMMA = async (req, res) => {
+export const getPuntosMMA = async (req, res) => {
   try {
     const { lat, lng, distance } = req.query;
 
@@ -29,7 +29,6 @@ const getPuntosMMA = async (req, res) => {
 
     const data = response.data;
 
-    // 🔄 Limpiamos / transformamos los datos para tu frontend
     const cleaned = data.map((p, idx) => ({
       id: idx,
       lat: Number(p.lat),
@@ -54,8 +53,4 @@ const getPuntosMMA = async (req, res) => {
       .status(500)
       .json({ message: "Error al obtener puntos de reciclaje oficiales" });
   }
-};
-
-module.exports = {
-  getPuntosMMA,
 };
