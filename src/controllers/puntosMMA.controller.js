@@ -1,5 +1,5 @@
 // src/controllers/puntosMMA.controller.js
-import axios from "axios";
+const axios = require("axios"); // <-- OK porque ya funcionaba antes con require()
 
 const MATERIALS_TRANSLATION = {
   glass: "Vidrio",
@@ -12,7 +12,7 @@ const MATERIALS_TRANSLATION = {
   phone: "Celulares",
 };
 
-export const getPuntosMMA = async (req, res) => {
+const getPuntosMMA = async (req, res) => {
   try {
     const { lat, lng, distance } = req.query;
 
@@ -43,14 +43,14 @@ export const getPuntosMMA = async (req, res) => {
       owner: p.owner || "",
       manager: p.manager || "",
       estado: p.status || "",
-      distance: p.distance ? Number(p.distance) : null,
     }));
 
     res.json(cleaned);
   } catch (error) {
     console.error("Error al obtener puntos MMA:", error.message);
-    res
-      .status(500)
-      .json({ message: "Error al obtener puntos de reciclaje oficiales" });
+    res.status(500).json({ message: "Error al obtener puntos de reciclaje oficiales" });
   }
 };
+
+export { getPuntosMMA };
+
