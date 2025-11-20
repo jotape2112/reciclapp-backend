@@ -1,5 +1,4 @@
 // src/controllers/puntosMMA.controller.js
-const axios = require("axios"); // <-- OK porque ya funcionaba antes con require()
 
 const MATERIALS_TRANSLATION = {
   glass: "Vidrio",
@@ -12,22 +11,24 @@ const MATERIALS_TRANSLATION = {
   phone: "Celulares",
 };
 
-const getPuntosMMA = async (req, res) => {
+export const getPuntosMMA = async (req, res) => {
   try {
     const { lat, lng, distance } = req.query;
 
-    const response = await axios.get(
-      "https://puntoslimpios.mma.gob.cl/api/points/geo",
-      {
-        params: {
-          lat: lat || -33.4405632,
-          lng: lng || -70.6614779,
-          distance: distance || 20,
-        },
-      }
-    );
+    // Construimos la URL con parámetros
+    const url = new URL("https://puntoslimpios.mma.gob.cl/api/points/geo");
+    url.searchParams.set("lat", lat || "-33.4405632");
+    url.searchParams.set("lng", lng || "-70.6614779");
+    url.searchParams.set("distance", distance || "20");
 
-    const data = response.data;
+    // 🔁 Usamos fetch nativo de Node 22 (NO axios, NO require)
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`Respuesta no OK del servicio MMA: ${response.status}`);
+    }
+
+    const data = await response.json();
 
     const cleaned = data.map((p, idx) => ({
       id: idx,
@@ -43,14 +44,14 @@ const getPuntosMMA = async (req, res) => {
       owner: p.owner || "",
       manager: p.manager || "",
       estado: p.status || "",
+      distance: p.distance ? Number(p.distance) : null,
     }));
 
     res.json(cleaned);
   } catch (error) {
-    console.error("Error al obtener puntos MMA:", error.message);
-    res.status(500).json({ message: "Error al obtener puntos de reciclaje oficiales" });
+    console.error("Error obteniendo puntos MMA:", error);
+    res
+      .status(500)
+      .json({ message: "Error al obtener puntos de reciclaje oficiales" });
   }
 };
-
-export { getPuntosMMA };
-
