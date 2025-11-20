@@ -1,6 +1,6 @@
 // src/routes/puntosMMA.routes.js
 import express from "express";
-import { getPuntosMMA } from "../controllers/puntosMMAController.js";
+import { getPuntosMMA } from "../controllers/puntosMMA.controller.js";
 
 const router = express.Router();
 
