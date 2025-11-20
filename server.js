@@ -4,6 +4,7 @@ import connectDB from "./src/config/db.js";
 import userRoutes from "./src/routes/userroutes.js";
 import requestRoutes from "./src/routes/requestRoutes.js";
 import pointRoutes from "./src/routes/pointRoutes.js";
+import puntosMMARoutes from "./src/routes/puntosMMARoutes.js";
 import cors from "cors";
 
 
@@ -43,6 +44,7 @@ app.use(express.json());
 app.use("/api/users", userRoutes);
 app.use("/api/requests", requestRoutes);
 app.use("/api/points", pointRoutes);
+app.use("/api/puntos-mma", puntosMMARoutes);
 
 // Conexión y arranque
 connectDB();
