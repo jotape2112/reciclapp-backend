@@ -4,7 +4,7 @@ import connectDB from "./src/config/db.js";
 import userRoutes from "./src/routes/userroutes.js";
 import requestRoutes from "./src/routes/requestRoutes.js";
 import pointRoutes from "./src/routes/pointRoutes.js";
-import puntosMMARoutes from "./src/routes/puntosMMARoutes.js";
+import puntosMMARoutes from "./src/routes/puntosMMA.routes.js";
 import cors from "cors";
 
 
