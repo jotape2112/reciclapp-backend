@@ -1,6 +1,6 @@
 
 const express = require("express");
-const { getPuntosMMA } = require("../controllers/puntosMMA.controller");
+const { getPuntosMMA } = require("../controllers/puntosMMA.controller.js");
 
 const router = express.Router();
 
