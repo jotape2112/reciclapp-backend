@@ -117,8 +117,11 @@ export const getStats = async (req, res) => {
 
       // Contar por comuna
       if (r.address) {
-        const comuna = r.address.split(",")[0]?.trim() || "Desconocida";
+        const parts = r.address.split(",");
+        const comuna = parts[1]?.trim() || "Desconocida";
         communeCount[comuna] = (communeCount[comuna] || 0) + 1;
+      }
+
       }
     });
 
