@@ -8,7 +8,9 @@ const MATERIALS_LABELS = {
   power_bank: "Pilas",
 };
 
-// ✅ Crear solicitud (solo usuario)
+// =========================================================
+//  Crear solicitud
+// =========================================================
 export const createRequest = async (req, res) => {
   try {
     if (req.user.role !== "usuario") {
@@ -32,7 +34,9 @@ export const createRequest = async (req, res) => {
   }
 };
 
-// ✅ Ver solicitudes del usuario autenticado
+// =========================================================
+//  Ver solicitudes del usuario autenticado
+// =========================================================
 export const getUserRequests = async (req, res) => {
   try {
     const requests = await Request.find({ userId: req.user.id }).sort({
@@ -45,7 +49,9 @@ export const getUserRequests = async (req, res) => {
   }
 };
 
-// ✅ Ver todas las solicitudes (para empresas/admin)
+// =========================================================
+//  Ver todas las solicitudes (empresas/admin)
+// =========================================================
 export const getAllRequests = async (req, res) => {
   try {
     if (req.user.role !== "empresa" && req.user.role !== "admin") {
@@ -63,7 +69,9 @@ export const getAllRequests = async (req, res) => {
   }
 };
 
-// ✅ Actualizar estado (aceptar, rechazar, completar)
+// =========================================================
+//  Actualizar estado (aceptar, rechazar, completar)
+// =========================================================
 export const updateStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -94,7 +102,9 @@ export const updateStatus = async (req, res) => {
   }
 };
 
-// ✅ Ver historial de solicitudes completadas (solo empresas)
+// =========================================================
+//  Ver historial de solicitudes completadas (empresa/admin)
+// =========================================================
 export const getCompletedRequests = async (req, res) => {
   try {
     if (req.user.role !== "empresa" && req.user.role !== "admin") {
@@ -116,7 +126,66 @@ export const getCompletedRequests = async (req, res) => {
   }
 };
 
-// ✅ Obtener estadísticas de solicitudes completadas (para empresas)
+// =========================================================
+//  ⭐ Nueva función: Calificar servicio de una solicitud
+// =========================================================
+export const rateRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { score, comment } = req.body;
+    const userId = req.user.id;
+
+    // Validar puntaje
+    if (!score || score < 1 || score > 5) {
+      return res.status(400).json({
+        message: "La calificación debe ser un número entre 1 y 5.",
+      });
+    }
+
+    const request = await Request.findById(id);
+    if (!request)
+      return res.status(404).json({ message: "Solicitud no encontrada." });
+
+    // Solo el dueño de la solicitud puede calificar
+    if (request.userId.toString() !== userId) {
+      return res
+        .status(403)
+        .json({ message: "No puedes calificar una solicitud que no es tuya." });
+    }
+
+    // Solo solicitudes completadas pueden ser calificadas
+    if (request.status !== "completada") {
+      return res.status(400).json({
+        message: "Solo puedes calificar solicitudes completadas.",
+      });
+    }
+
+    // Evitar recalificar (si quieres permitir editar, quita este bloque)
+    if (request.rating?.score) {
+      return res
+        .status(400)
+        .json({ message: "Esta solicitud ya fue calificada." });
+    }
+
+    // Guardar calificación
+    request.rating = {
+      score,
+      comment: comment || "",
+      ratedAt: new Date(),
+    };
+
+    await request.save();
+
+    res.json({ message: "Calificación registrada con éxito.", request });
+  } catch (err) {
+    console.error("Error al calificar solicitud:", err);
+    res.status(500).json({ message: "Error interno del servidor." });
+  }
+};
+
+// =========================================================
+//  Obtener estadísticas
+// =========================================================
 export const getStats = async (req, res) => {
   try {
     if (req.user.role !== "empresa" && req.user.role !== "admin") {
@@ -141,10 +210,8 @@ export const getStats = async (req, res) => {
         const qty = item.quantity || 1;
         const unit = item.unit || "unidad";
 
-        // Total por material
         materialTotals[mat] = (materialTotals[mat] || 0) + qty;
 
-        // Contar unidades más usadas
         if (!materialUnits[mat]) materialUnits[mat] = {};
         materialUnits[mat][unit] = (materialUnits[mat][unit] || 0) + 1;
       });
@@ -155,15 +222,14 @@ export const getStats = async (req, res) => {
       });
       monthlyCount[month] = (monthlyCount[month] || 0) + 1;
 
-      // --- Contar por comuna (limpiando código postal) ---
+      // --- Contar por comuna ---
       if (r.address) {
         const parts = r.address.split(",").map((p) => p.trim());
         let rawComuna = parts.length >= 2 ? parts[1] : "Desconocida";
 
-        // Si tiene código postal (ej: "8370093 Santiago")
         const tokens = rawComuna.split(/\s+/);
         if (tokens.length > 1 && /^\d+$/.test(tokens[0])) {
-          rawComuna = tokens.slice(1).join(" "); // → "Santiago"
+          rawComuna = tokens.slice(1).join(" ");
         }
 
         const comuna = rawComuna || "Desconocida";
@@ -171,7 +237,6 @@ export const getStats = async (req, res) => {
       }
     });
 
-    // --- Ordenar meses ---
     const monthsOrder = [
       "ene",
       "feb",
@@ -193,7 +258,6 @@ export const getStats = async (req, res) => {
         (a, b) => monthsOrder.indexOf(a.month) - monthsOrder.indexOf(b.month)
       );
 
-    // --- Construir resultado final ---
     const data = {
       materials: Object.entries(materialTotals).map(([mat, total]) => {
         const unitMap = materialUnits[mat] || {};
