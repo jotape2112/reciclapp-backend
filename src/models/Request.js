@@ -3,25 +3,18 @@ import mongoose from "mongoose";
 const requestSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-
-    // Empresa que realizará el retiro
     companyId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    unit: { type: String, default: "unidad" },
-
-    // Ubicación exacta
-    address: { type: String, required: true },
-    lat: { type: Number },
-    lng: { type: Number },
-
-    schedule: { type: String, required: true },
 
     items: [
       {
-        material: { type: String, required: true },
+        material: { type: String, required: true }, // ej: "glass"
         quantity: { type: Number, default: 1 },
+        unit: { type: String, default: "unidad" },  // ej: "kilos", "bolsas"
       },
     ],
 
+    address: { type: String, required: true },
+    schedule: { type: String, required: true },
     status: {
       type: String,
       enum: ["pendiente", "aceptada", "rechazada", "completada"],
@@ -33,3 +26,4 @@ const requestSchema = new mongoose.Schema(
 
 const Request = mongoose.model("Request", requestSchema);
 export default Request;
+
