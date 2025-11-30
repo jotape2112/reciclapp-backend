@@ -6,6 +6,7 @@ const requestSchema = new mongoose.Schema(
 
     // Empresa que realizará el retiro
     companyId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    unit: { type: String, default: "unidad" },
 
     // Ubicación exacta
     address: { type: String, required: true },
