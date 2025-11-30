@@ -136,20 +136,29 @@ export const getStats = async (req, res) => {
     completedRequests.forEach((r) => {
       // Contar materiales
       r.items?.forEach((item) => {
+        const qty = item.quantity || 1;
         materialCount[item.material] =
-          (materialCount[item.material] || 0) + (item.quantity || 0);
+          (materialCount[item.material] || 0) + qty;
       });
 
-      // Contar por mes
+      // Contar por mes (abreviatura en español)
       const month = new Date(r.createdAt).toLocaleString("es-CL", {
         month: "short",
       });
       monthlyCount[month] = (monthlyCount[month] || 0) + 1;
 
-      // Contar por comuna (segunda parte de la dirección)
+      // Contar por comuna (segunda parte de la dirección, limpiando código postal)
       if (r.address) {
         const parts = r.address.split(",").map((p) => p.trim());
-        const comuna = parts.length >= 2 ? parts[1] : "Desconocida";
+        let rawComuna = parts.length >= 2 ? parts[1] : "Desconocida";
+
+        // Si viene algo como "8370093 Santiago" → quitar el número
+        const tokens = rawComuna.split(/\s+/);
+        if (tokens.length > 1 && /^\d+$/.test(tokens[0])) {
+          rawComuna = tokens.slice(1).join(" ");
+        }
+
+        const comuna = rawComuna || "Desconocida";
         communeCount[comuna] = (communeCount[comuna] || 0) + 1;
       }
     });
