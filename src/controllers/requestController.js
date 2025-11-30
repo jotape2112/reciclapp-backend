@@ -129,33 +129,41 @@ export const getStats = async (req, res) => {
       .populate("userId", "name")
       .lean();
 
-    const materialCount = {};
+    const materialTotals = {};
+    const materialUnits = {};
     const communeCount = {};
     const monthlyCount = {};
 
     completedRequests.forEach((r) => {
-      // Contar materiales
+      // --- Contar materiales + unidad dominante ---
       r.items?.forEach((item) => {
+        const mat = item.material;
         const qty = item.quantity || 1;
-        materialCount[item.material] =
-          (materialCount[item.material] || 0) + qty;
+        const unit = item.unit || "unidad";
+
+        // Total por material
+        materialTotals[mat] = (materialTotals[mat] || 0) + qty;
+
+        // Contar unidades más usadas
+        if (!materialUnits[mat]) materialUnits[mat] = {};
+        materialUnits[mat][unit] = (materialUnits[mat][unit] || 0) + 1;
       });
 
-      // Contar por mes (abreviatura en español)
+      // --- Contar por mes ---
       const month = new Date(r.createdAt).toLocaleString("es-CL", {
         month: "short",
       });
       monthlyCount[month] = (monthlyCount[month] || 0) + 1;
 
-      // Contar por comuna (segunda parte de la dirección, limpiando código postal)
+      // --- Contar por comuna (limpiando código postal) ---
       if (r.address) {
         const parts = r.address.split(",").map((p) => p.trim());
         let rawComuna = parts.length >= 2 ? parts[1] : "Desconocida";
 
-        // Si viene algo como "8370093 Santiago" → quitar el número
+        // Si tiene código postal (ej: "8370093 Santiago")
         const tokens = rawComuna.split(/\s+/);
         if (tokens.length > 1 && /^\d+$/.test(tokens[0])) {
-          rawComuna = tokens.slice(1).join(" ");
+          rawComuna = tokens.slice(1).join(" "); // → "Santiago"
         }
 
         const comuna = rawComuna || "Desconocida";
@@ -163,7 +171,7 @@ export const getStats = async (req, res) => {
       }
     });
 
-    // ✅ Ordenar los meses correctamente
+    // --- Ordenar meses ---
     const monthsOrder = [
       "ene",
       "feb",
@@ -178,22 +186,39 @@ export const getStats = async (req, res) => {
       "nov",
       "dic",
     ];
+
     const monthly = Object.entries(monthlyCount)
       .map(([month, total]) => ({ month, total }))
       .sort(
         (a, b) => monthsOrder.indexOf(a.month) - monthsOrder.indexOf(b.month)
       );
 
-    // ✅ Preparar datos finales (materiales ya en español)
+    // --- Construir resultado final ---
     const data = {
-      materials: Object.entries(materialCount).map(([name, value]) => ({
-        name: MATERIALS_LABELS[name] || name,
-        value,
-      })),
+      materials: Object.entries(materialTotals).map(([mat, total]) => {
+        const unitMap = materialUnits[mat] || {};
+        let preferredUnit = "unidad";
+        let maxCount = 0;
+
+        Object.entries(unitMap).forEach(([u, c]) => {
+          if (c > maxCount) {
+            maxCount = c;
+            preferredUnit = u;
+          }
+        });
+
+        return {
+          name: MATERIALS_LABELS[mat] || mat,
+          value: total,
+          unit: preferredUnit,
+        };
+      }),
+
       communes: Object.entries(communeCount).map(([name, value]) => ({
         name,
         value,
       })),
+
       monthly,
     };
 
