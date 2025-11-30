@@ -1,36 +1,33 @@
-import mongoose from "mongoose";
+import express from "express";
+import {
+  createRequest,
+  getUserRequests,
+  getAllRequests,
+  updateStatus,
+  getCompletedRequests,
+  getStats,
+  rateRequest,              // ⬅️ NUEVO
+} from "../controllers/requestController.js";
+import { protect } from "../middlewares/auth.js";
 
-const requestSchema = new mongoose.Schema(
-  {
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    companyId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+const router = express.Router();
 
-    items: [
-      {
-        material: { type: String, required: true },
-        quantity: { type: Number, default: 1 },
-        unit: { type: String, default: "unidad" },
-      },
-    ],
+router.post("/", protect, createRequest);
 
-    address: { type: String, required: true },
-    schedule: { type: String, required: true },
+// Rutas para historial del usuario
+router.get("/user", protect, getUserRequests);
+router.get("/my", protect, getUserRequests);
 
-    status: {
-      type: String,
-      enum: ["pendiente", "aceptada", "rechazada", "completada"],
-      default: "pendiente",
-    },
+// Todas las solicitudes (ej: para empresa/admin)
+router.get("/", protect, getAllRequests);
 
-    // ⭐ Calificación del servicio
-    rating: {
-      score: { type: Number, min: 1, max: 5 },
-      comment: { type: String },
-      ratedAt: { type: Date },
-    },
-  },
-  { timestamps: true }
-);
+// Actualizar estado
+router.put("/:id", protect, updateStatus);
 
-const Request = mongoose.model("Request", requestSchema);
-export default Request;
+// 🔥 NUEVA: Calificar una solicitud
+router.put("/:id/rating", protect, rateRequest);
+
+router.get("/completed", protect, getCompletedRequests);
+router.get("/stats", protect, getStats);
+
+export default router;
