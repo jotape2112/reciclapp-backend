@@ -7,18 +7,26 @@ const requestSchema = new mongoose.Schema(
 
     items: [
       {
-        material: { type: String, required: true }, // ej: "glass"
+        material: { type: String, required: true },
         quantity: { type: Number, default: 1 },
-        unit: { type: String, default: "unidad" },  // ej: "kilos", "bolsas"
+        unit: { type: String, default: "unidad" },
       },
     ],
 
     address: { type: String, required: true },
     schedule: { type: String, required: true },
+
     status: {
       type: String,
       enum: ["pendiente", "aceptada", "rechazada", "completada"],
       default: "pendiente",
+    },
+
+    // ⭐ Calificación del servicio
+    rating: {
+      score: { type: Number, min: 1, max: 5 },
+      comment: { type: String },
+      ratedAt: { type: Date },
     },
   },
   { timestamps: true }
@@ -26,4 +34,3 @@ const requestSchema = new mongoose.Schema(
 
 const Request = mongoose.model("Request", requestSchema);
 export default Request;
-
