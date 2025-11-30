@@ -129,12 +129,25 @@ export const getStats = async (req, res) => {
       .sort((a, b) => monthsOrder.indexOf(a.month) - monthsOrder.indexOf(b.month));
 
     // ✅ Preparar datos finales
-    const data = {
-      materials: Object.entries(materialCount).map(([name, value]) => ({ name, value })),
-      communes: Object.entries(communeCount).map(([name, value]) => ({ name, value })),
-      monthly,
-    };
-
+   const MATERIALS_LABELS = {
+    glass: "Vidrio",
+    paper: "Papel",
+    paperboard: "Cartón",
+    plastic: "Plástico",
+    power_bank: "Pilas",
+  };
+  
+  const data = {
+    materials: Object.entries(materialCount).map(([name, value]) => ({
+      name: MATERIALS_LABELS[name] || name, // ← traducido al español
+      value,
+    })),
+    communes: Object.entries(communeCount).map(([name, value]) => ({
+      name,
+      value,
+    })),
+    monthly,
+  };
     res.json(data);
   } catch (err) {
     console.error(err);
