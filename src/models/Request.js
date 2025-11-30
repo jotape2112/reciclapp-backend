@@ -3,15 +3,24 @@ import mongoose from "mongoose";
 const requestSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+
+    // Empresa que realizará el retiro
     companyId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+
+    // Ubicación exacta
+    address: { type: String, required: true },
+    lat: { type: Number },
+    lng: { type: Number },
+
+    schedule: { type: String, required: true },
+
     items: [
       {
         material: { type: String, required: true },
         quantity: { type: Number, default: 1 },
       },
     ],
-    address: { type: String, required: true },
-    schedule: { type: String, required: true },
+
     status: {
       type: String,
       enum: ["pendiente", "aceptada", "rechazada", "completada"],
