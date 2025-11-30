@@ -6,6 +6,7 @@ import {
   updateStatus,
   getCompletedRequests,
   getStats,
+  rateRequest,              // 👈 NUEVO
 } from "../controllers/requestController.js";
 import { protect } from "../middlewares/auth.js";
 
@@ -13,12 +14,19 @@ const router = express.Router();
 
 router.post("/", protect, createRequest);
 
-// 👇 Rutas para historial del usuario
-router.get("/user", protect, getUserRequests);  // la que ya tenías
-router.get("/my", protect, getUserRequests);    // NUEVA, usada por el frontend
+// Historial del usuario
+router.get("/user", protect, getUserRequests);
+router.get("/my", protect, getUserRequests);
 
+// Todas las solicitudes (empresa/admin)
 router.get("/", protect, getAllRequests);
+
+// Actualizar estado
 router.put("/:id", protect, updateStatus);
+
+// ⭐ Calificar solicitud
+router.put("/:id/rating", protect, rateRequest);
+
 router.get("/completed", protect, getCompletedRequests);
 router.get("/stats", protect, getStats);
 
