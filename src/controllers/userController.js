@@ -74,4 +74,18 @@ export const getProfile = async (req, res) => {
     res.status(500).json({ message: "Error en el servidor" });
   }
 };
+// @desc   Obtener todas las empresas registradas
+// @route  GET /api/users/companies
+export const getCompanies = async (req, res) => {
+  try {
+    const companies = await User.find({ role: "empresa" }).select("_id name email");
+    res.json(companies);
+  } catch (err) {
+    console.error("Error al obtener empresas:", err);
+    res.status(500).json({ message: "Error al obtener empresas." });
+  }
+};
+
+export { register, login, getProfile, getCompanies };
+
 
