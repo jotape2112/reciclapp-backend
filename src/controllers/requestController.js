@@ -70,7 +70,7 @@ export const getAllRequests = async (req, res) => {
 };
 
 // =========================================================
-//  Actualizar estado
+//  Actualizar estado (aceptar, rechazar, completar)
 // =========================================================
 export const updateStatus = async (req, res) => {
   try {
@@ -108,7 +108,9 @@ export const updateStatus = async (req, res) => {
 export const getCompletedRequests = async (req, res) => {
   try {
     if (req.user.role !== "empresa" && req.user.role !== "admin") {
-      return res.status(403).json({ message: "Solo las empresas pueden ver el historial." });
+      return res.status(403).json({
+        message: "Solo las empresas pueden ver el historial.",
+      });
     }
 
     const completed = await Request.find({ status: "completada" })
@@ -144,9 +146,9 @@ export const rateRequest = async (req, res) => {
       return res.status(404).json({ message: "Solicitud no encontrada." });
 
     if (request.userId.toString() !== userId) {
-      return res
-        .status(403)
-        .json({ message: "No puedes calificar una solicitud que no es tuya." });
+      return res.status(403).json({
+        message: "No puedes calificar una solicitud que no es tuya.",
+      });
     }
 
     if (request.status !== "completada") {
@@ -177,33 +179,37 @@ export const rateRequest = async (req, res) => {
 };
 
 // =========================================================
-//  📊 NUEVO getStats SIN mezclas de unidades
+//  📊 Obtener estadísticas (agrupado por material con detalle por unidad)
 // =========================================================
 export const getStats = async (req, res) => {
   try {
     if (req.user.role !== "empresa" && req.user.role !== "admin") {
-      return res
-        .status(403)
-        .json({ message: "Solo las empresas pueden ver estadísticas." });
+      return res.status(403).json({
+        message: "Solo las empresas pueden ver estadísticas.",
+      });
     }
 
     const completedRequests = await Request.find({ status: "completada" })
       .populate("userId", "name")
       .lean();
 
-    const materialTotals = {}; // clave: material__unidad
+    // materialUnitsTotals[material][unit] = totalCantidad
+    const materialUnitsTotals = {};
     const communeCount = {};
     const monthlyCount = {};
 
     completedRequests.forEach((r) => {
-      // --- Contar materiales por material + unidad ---
+      // --- Contar materiales / desglosado por unidad ---
       r.items?.forEach((item) => {
         const mat = item.material;
         const qty = item.quantity || 1;
         const unit = item.unit || "unidad";
 
-        const key = `${mat}__${unit}`;
-        materialTotals[key] = (materialTotals[key] || 0) + qty;
+        if (!materialUnitsTotals[mat]) {
+          materialUnitsTotals[mat] = {};
+        }
+        materialUnitsTotals[mat][unit] =
+          (materialUnitsTotals[mat][unit] || 0) + qty;
       });
 
       // --- Contar por mes ---
@@ -227,7 +233,7 @@ export const getStats = async (req, res) => {
       }
     });
 
-    // Orden de meses
+    // Orden meses
     const monthsOrder = [
       "ene","feb","mar","abr","may","jun",
       "jul","ago","sep","oct","nov","dic"
@@ -239,28 +245,37 @@ export const getStats = async (req, res) => {
         (a, b) => monthsOrder.indexOf(a.month) - monthsOrder.indexOf(b.month)
       );
 
-    // Resultado final
-    const data = {
-      materials: Object.entries(materialTotals).map(([key, total]) => {
-        const [mat, unit] = key.split("__");
+    // Construir estadísticas por material limpio
+    const materials = Object.entries(materialUnitsTotals).map(
+      ([mat, unitsObj]) => {
+        const total = Object.values(unitsObj).reduce(
+          (acc, n) => acc + n,
+          0
+        );
+
+        const breakdown = Object.entries(unitsObj).map(
+          ([unit, value]) => ({ unit, value })
+        );
+
         return {
-          name: `${MATERIALS_LABELS[mat] || mat} (${unit})`,
+          name: MATERIALS_LABELS[mat] || mat,
           value: total,
-          unit,
+          breakdown, // Info detallada para tooltip
         };
-      }),
+      }
+    );
 
-      communes: Object.entries(communeCount).map(([name, value]) => ({
-        name,
-        value,
-      })),
+    const communes = Object.entries(communeCount).map(([name, value]) => ({
+      name,
+      value,
+    }));
 
-      monthly,
-    };
-
-    res.json(data);
+    res.json({ materials, communes, monthly });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Error al obtener estadísticas." });
+    res.status(500).json({
+      message: "Error al obtener estadísticas.",
+    });
   }
 };
+
