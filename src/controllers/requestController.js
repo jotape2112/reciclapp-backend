@@ -70,7 +70,7 @@ export const getAllRequests = async (req, res) => {
 };
 
 // =========================================================
-//  Actualizar estado (aceptar, rechazar, completar)
+//  Actualizar estado
 // =========================================================
 export const updateStatus = async (req, res) => {
   try {
@@ -103,14 +103,12 @@ export const updateStatus = async (req, res) => {
 };
 
 // =========================================================
-//  Ver historial de solicitudes completadas (empresa/admin)
+//  Ver historial completado (empresa/admin)
 // =========================================================
 export const getCompletedRequests = async (req, res) => {
   try {
     if (req.user.role !== "empresa" && req.user.role !== "admin") {
-      return res
-        .status(403)
-        .json({ message: "Solo las empresas pueden ver el historial." });
+      return res.status(403).json({ message: "Solo las empresas pueden ver el historial." });
     }
 
     const completed = await Request.find({ status: "completada" })
@@ -127,7 +125,7 @@ export const getCompletedRequests = async (req, res) => {
 };
 
 // =========================================================
-//  ⭐ Nueva función: Calificar servicio de una solicitud
+//  ⭐ Calificar servicio
 // =========================================================
 export const rateRequest = async (req, res) => {
   try {
@@ -135,7 +133,6 @@ export const rateRequest = async (req, res) => {
     const { score, comment } = req.body;
     const userId = req.user.id;
 
-    // Validar puntaje
     if (!score || score < 1 || score > 5) {
       return res.status(400).json({
         message: "La calificación debe ser un número entre 1 y 5.",
@@ -146,28 +143,24 @@ export const rateRequest = async (req, res) => {
     if (!request)
       return res.status(404).json({ message: "Solicitud no encontrada." });
 
-    // Solo el dueño de la solicitud puede calificar
     if (request.userId.toString() !== userId) {
       return res
         .status(403)
         .json({ message: "No puedes calificar una solicitud que no es tuya." });
     }
 
-    // Solo solicitudes completadas pueden ser calificadas
     if (request.status !== "completada") {
       return res.status(400).json({
         message: "Solo puedes calificar solicitudes completadas.",
       });
     }
 
-    // Evitar recalificar (si quieres permitir editar, quita este bloque)
     if (request.rating?.score) {
       return res
         .status(400)
         .json({ message: "Esta solicitud ya fue calificada." });
     }
 
-    // Guardar calificación
     request.rating = {
       score,
       comment: comment || "",
@@ -184,7 +177,7 @@ export const rateRequest = async (req, res) => {
 };
 
 // =========================================================
-//  Obtener estadísticas
+//  📊 NUEVO getStats SIN mezclas de unidades
 // =========================================================
 export const getStats = async (req, res) => {
   try {
@@ -198,22 +191,19 @@ export const getStats = async (req, res) => {
       .populate("userId", "name")
       .lean();
 
-    const materialTotals = {};
-    const materialUnits = {};
+    const materialTotals = {}; // clave: material__unidad
     const communeCount = {};
     const monthlyCount = {};
 
     completedRequests.forEach((r) => {
-      // --- Contar materiales + unidad dominante ---
+      // --- Contar materiales por material + unidad ---
       r.items?.forEach((item) => {
         const mat = item.material;
         const qty = item.quantity || 1;
         const unit = item.unit || "unidad";
 
-        materialTotals[mat] = (materialTotals[mat] || 0) + qty;
-
-        if (!materialUnits[mat]) materialUnits[mat] = {};
-        materialUnits[mat][unit] = (materialUnits[mat][unit] || 0) + 1;
+        const key = `${mat}__${unit}`;
+        materialTotals[key] = (materialTotals[key] || 0) + qty;
       });
 
       // --- Contar por mes ---
@@ -237,19 +227,10 @@ export const getStats = async (req, res) => {
       }
     });
 
+    // Orden de meses
     const monthsOrder = [
-      "ene",
-      "feb",
-      "mar",
-      "abr",
-      "may",
-      "jun",
-      "jul",
-      "ago",
-      "sep",
-      "oct",
-      "nov",
-      "dic",
+      "ene","feb","mar","abr","may","jun",
+      "jul","ago","sep","oct","nov","dic"
     ];
 
     const monthly = Object.entries(monthlyCount)
@@ -258,23 +239,14 @@ export const getStats = async (req, res) => {
         (a, b) => monthsOrder.indexOf(a.month) - monthsOrder.indexOf(b.month)
       );
 
+    // Resultado final
     const data = {
-      materials: Object.entries(materialTotals).map(([mat, total]) => {
-        const unitMap = materialUnits[mat] || {};
-        let preferredUnit = "unidad";
-        let maxCount = 0;
-
-        Object.entries(unitMap).forEach(([u, c]) => {
-          if (c > maxCount) {
-            maxCount = c;
-            preferredUnit = u;
-          }
-        });
-
+      materials: Object.entries(materialTotals).map(([key, total]) => {
+        const [mat, unit] = key.split("__");
         return {
-          name: MATERIALS_LABELS[mat] || mat,
+          name: `${MATERIALS_LABELS[mat] || mat} (${unit})`,
           value: total,
-          unit: preferredUnit,
+          unit,
         };
       }),
 
