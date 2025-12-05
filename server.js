@@ -10,26 +10,27 @@ import cors from "cors";
 dotenv.config();
 const app = express();
 
-// 🌍 Lista de orígenes permitidos
+// 🌍 Lista de orígenes permitidos EN PRODUCCIÓN
 const allowedOrigins = [
-  "https://reciclap.netlify.app",
-  "http://localhost:5173",     // pruebas locales
-  "http://10.0.2.2:5173",      // 👈 emulador Android
+  "https://reciclap.netlify.app",  // dominio oficial
 ];
 
 // 🧩 Configuración global de CORS
 app.use(
   cors({
     origin: function (origin, callback) {
-
-      // Permitir llamadas sin origin (Postman, servidor interno, etc.)
+      // Permite solicitudes sin origin (Postman, backend interno, etc.)
       if (!origin) return callback(null, true);
 
-      // Validar si el origen está permitido
-      if (!allowedOrigins.includes(origin)) {
+      const isLocalhost = origin.startsWith("http://localhost");
+      const isEmulator = origin.startsWith("http://10.0.2.2");
+      const isProduction = allowedOrigins.includes(origin);
+
+      // Si NO coincide con localhost, emulador o producción → bloquear
+      if (!isLocalhost && !isEmulator && !isProduction) {
         console.log(`❌ CORS bloqueó solicitud desde: ${origin}`);
         return callback(
-          new Error(`CORS bloqueó el acceso desde el dominio: ${origin}`),
+          new Error(`CORS bloqueó acceso desde dominio no permitido: ${origin}`),
           false
         );
       }
@@ -54,4 +55,6 @@ app.use("/api/puntos-mma", puntosMMARoutes);
 connectDB();
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Servidor corriendo en puerto ${PORT}`));
+app.listen(PORT, () =>
+  console.log(`🚀 Servidor corriendo en puerto ${PORT}`)
+);
